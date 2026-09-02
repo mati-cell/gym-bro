@@ -4,6 +4,26 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
+export type ParsedExercise = {
+  name: string;
+  muscle_group: string | null;
+  planned_sets: number | null;
+  planned_reps: string | null;
+  planned_weight_kg: number | null;
+  actual_reps: number[];
+  performed: boolean;
+  notes: string | null;
+  action: string | null;
+};
+
+export type ParsedSession = {
+  day_number: number | null;
+  session_date: string | null;
+  title: string | null;
+  notes: string | null;
+  exercises: ParsedExercise[];
+};
+
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 async function callNim(model: string, messages: ChatMessage[], temperature = 0.4) {
@@ -152,7 +172,7 @@ Reglas:
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("El agente no devolvió un JSON válido. Probá de nuevo.");
     try {
-      return JSON.parse(match[0]) as Record<string, unknown>;
+      return JSON.parse(match[0]) as ParsedSession;
     } catch {
       throw new Error("No pude interpretar la respuesta del agente. Probá de nuevo.");
     }

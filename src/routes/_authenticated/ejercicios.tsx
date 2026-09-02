@@ -96,7 +96,7 @@ function ExerciseView() {
         <p className="text-sm text-muted-foreground">Todavía no hay ejercicios registrados.</p>
       ) : (
         <>
-          <Select value={selected || names[0]} onValueChange={setSelected}>
+          <Select value={selected || names[0] || ""} onValueChange={setSelected}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>

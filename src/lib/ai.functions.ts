@@ -152,7 +152,7 @@ Reglas:
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("El agente no devolvió un JSON válido. Probá de nuevo.");
     try {
-      return JSON.parse(match[0]) as unknown;
+      return JSON.parse(match[0]) as Record<string, unknown>;
     } catch {
       throw new Error("No pude interpretar la respuesta del agente. Probá de nuevo.");
     }

@@ -123,7 +123,10 @@ function ProfilePage() {
     const { error } = await supabase
       .from("body_weight_logs")
       .insert({ user_id: data.userId, weight_kg: w });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setNewWeight("");
     setForm((f) => ({ ...f, weight_kg: String(w) }));
     await supabase.from("profiles").update({ weight_kg: w }).eq("id", data.userId);

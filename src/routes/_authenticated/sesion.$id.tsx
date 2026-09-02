@@ -64,7 +64,10 @@ function EditSession() {
 
   async function remove() {
     const { error } = await supabase.from("sessions").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Sesión borrada");
     navigate({ to: "/historial" });
   }

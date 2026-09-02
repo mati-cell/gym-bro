@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedEjerciciosRouteImport } from './routes/_authenticated/ejercicios'
 import { Route as AuthenticatedHistorialRouteImport } from './routes/_authenticated/historial'
 import { Route as AuthenticatedImportarRouteImport } from './routes/_authenticated/importar'
 import { Route as AuthenticatedNuevaRouteImport } from './routes/_authenticated/nueva'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedSesionIdRouteImport } from './routes/_authenticated/sesion.$id'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -28,6 +31,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEjerciciosRoute = AuthenticatedEjerciciosRouteImport.update({
+  id: '/ejercicios',
+  path: '/ejercicios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHistorialRoute = AuthenticatedHistorialRouteImport.update({
@@ -45,43 +53,81 @@ const AuthenticatedNuevaRoute = AuthenticatedNuevaRouteImport.update({
   path: '/nueva',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSesionIdRoute = AuthenticatedSesionIdRouteImport.update({
+  id: '/sesion/$id',
+  path: '/sesion/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/ejercicios': typeof AuthenticatedEjerciciosRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/importar': typeof AuthenticatedImportarRoute
   '/nueva': typeof AuthenticatedNuevaRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/sesion/$id': typeof AuthenticatedSesionIdRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/ejercicios': typeof AuthenticatedEjerciciosRoute
   '/historial': typeof AuthenticatedHistorialRoute
   '/importar': typeof AuthenticatedImportarRoute
   '/nueva': typeof AuthenticatedNuevaRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/': typeof AuthenticatedIndexRoute
+  '/sesion/$id': typeof AuthenticatedSesionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/ejercicios': typeof AuthenticatedEjerciciosRoute
   '/_authenticated/historial': typeof AuthenticatedHistorialRoute
   '/_authenticated/importar': typeof AuthenticatedImportarRoute
   '/_authenticated/nueva': typeof AuthenticatedNuevaRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/sesion/$id': typeof AuthenticatedSesionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/historial' | '/importar' | '/nueva'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/ejercicios'
+    | '/historial'
+    | '/importar'
+    | '/nueva'
+    | '/perfil'
+    | '/sesion/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/historial' | '/importar' | '/nueva' | '/'
+  to:
+    | '/auth'
+    | '/ejercicios'
+    | '/historial'
+    | '/importar'
+    | '/nueva'
+    | '/perfil'
+    | '/'
+    | '/sesion/$id'
   id:
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/ejercicios'
     | '/_authenticated/historial'
     | '/_authenticated/importar'
     | '/_authenticated/nueva'
+    | '/_authenticated/perfil'
     | '/_authenticated/'
+    | '/_authenticated/sesion/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -112,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ejercicios': {
+      id: '/_authenticated/ejercicios'
+      path: '/ejercicios'
+      fullPath: '/ejercicios'
+      preLoaderRoute: typeof AuthenticatedEjerciciosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/historial': {
       id: '/_authenticated/historial'
       path: '/historial'
@@ -133,21 +186,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNuevaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sesion/$id': {
+      id: '/_authenticated/sesion/$id'
+      path: '/sesion/$id'
+      fullPath: '/sesion/$id'
+      preLoaderRoute: typeof AuthenticatedSesionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedEjerciciosRoute: typeof AuthenticatedEjerciciosRoute
   AuthenticatedHistorialRoute: typeof AuthenticatedHistorialRoute
   AuthenticatedImportarRoute: typeof AuthenticatedImportarRoute
   AuthenticatedNuevaRoute: typeof AuthenticatedNuevaRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedSesionIdRoute: typeof AuthenticatedSesionIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedEjerciciosRoute: AuthenticatedEjerciciosRoute,
   AuthenticatedHistorialRoute: AuthenticatedHistorialRoute,
   AuthenticatedImportarRoute: AuthenticatedImportarRoute,
   AuthenticatedNuevaRoute: AuthenticatedNuevaRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedSesionIdRoute: AuthenticatedSesionIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

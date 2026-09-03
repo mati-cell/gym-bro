@@ -52,7 +52,7 @@ const EMPTY: Form = {
   goal: "",
   experience_level: "",
   notes: "",
-  ai_model: "openai/gpt-oss-20b",
+  ai_model: "gemini-2.0-flash",
 };
 
 function num(v: string) {
@@ -195,13 +195,13 @@ function ProfilePage() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Modelo de IA (NVIDIA NIM)</Label>
+          <Label>Modelo de IA (Google Gemini)</Label>
           <Input
             value={form.ai_model}
             onChange={(e) => setForm({ ...form, ai_model: e.target.value })}
           />
           <p className="text-xs text-muted-foreground">
-            Ej: openai/gpt-oss-20b, meta/llama-3.3-70b-instruct
+            Ej: gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro
           </p>
         </div>
         <Button className="w-full" disabled={saving} onClick={() => void save()}>

@@ -40,7 +40,7 @@ async function callGemini(model: string, messages: ChatMessage[], temperature = 
     parts: [{ text: m.content }],
   }));
   // Gemini exige que la conversación empiece con un turno de usuario.
-  while (contents.length > 0 && contents[0].role !== "user") contents.shift();
+  while (contents.length > 0 && contents[0]?.role !== "user") contents.shift();
 
   const res = await fetch(
     `${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`,

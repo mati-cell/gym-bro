@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-oss-20b";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const DEFAULT_MODEL = "gemini-2.0-flash";
 
 export type ParsedExercise = {
   name: string;
@@ -26,32 +26,64 @@ export type ParsedSession = {
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
-async function callNim(model: string, messages: ChatMessage[], temperature = 0.4) {
-  const apiKey = process.env["NVIDIA_NIM_API_KEY"];
-  if (!apiKey) throw new Error("Falta la API key de NVIDIA NIM en el servidor.");
+async function callGemini(model: string, messages: ChatMessage[], temperature = 0.4) {
+  const apiKey = process.env["GEMINI_API_KEY"];
+  if (!apiKey) throw new Error("Falta la API key de Google AI (Gemini) en el servidor.");
 
-  const res = await fetch(NIM_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+  const systemParts = messages
+    .filter((m) => m.role === "system")
+    .map((m) => m.content);
+  const turns = messages.filter((m) => m.role !== "system");
+
+  const contents = turns.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  // Gemini exige que la conversación empiece con un turno de usuario.
+  while (contents.length > 0 && contents[0].role !== "user") contents.shift();
+
+  const res = await fetch(
+    `${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        ...(systemParts.length
+          ? { systemInstruction: { parts: [{ text: systemParts.join("\n\n") }] } }
+          : {}),
+        contents,
+        generationConfig: { temperature },
+      }),
     },
-    body: JSON.stringify({ model, messages, temperature, stream: false }),
-  });
+  );
 
   if (!res.ok) {
     const detail = await res.text();
-    console.error("NVIDIA NIM error", res.status, detail);
+    console.error("Gemini error", res.status, detail);
     throw new Error(`El agente de IA devolvió un error (${res.status}).`);
   }
 
   const json = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
-  return json.choices?.[0]?.message?.content?.trim() ?? "";
+  return (
+    json.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text ?? "")
+      .join("")
+      .trim() ?? ""
+  );
 }
 
 type SupabaseCtx = { supabase: any; userId: string };
+
+function normalizeModel(model: string | null | undefined): string {
+  // Modelos viejos de NVIDIA NIM ("openai/...", "meta/...") ya no aplican.
+  if (!model || model.includes("/")) return DEFAULT_MODEL;
+  return model;
+}
 
 async function buildUserContext({ supabase, userId }: SupabaseCtx) {
   const [{ data: profile }, { data: weights }, { data: sessions }, { data: pending }] =
@@ -84,7 +116,7 @@ async function buildUserContext({ supabase, userId }: SupabaseCtx) {
   lines.push("EJERCICIOS CON ACCIÓN PENDIENTE:");
   lines.push(JSON.stringify(pending ?? []));
 
-  return { context: lines.join("\n"), model: profile?.ai_model || DEFAULT_MODEL };
+  return { context: lines.join("\n"), model: normalizeModel(profile?.ai_model) };
 }
 
 export const askAgent = createServerFn({ method: "POST" })
@@ -115,7 +147,7 @@ export const askAgent = createServerFn({ method: "POST" })
       ].join("\n"),
     };
 
-    const reply = await callNim(model, [system, ...data.messages], 0.5);
+    const reply = await callGemini(model, [system, ...data.messages], 0.5);
     return { reply, model };
   });
 
@@ -133,7 +165,7 @@ export const parseWorkoutText = createServerFn({ method: "POST" })
       .select("ai_model")
       .eq("id", userId)
       .maybeSingle();
-    const model = profile?.ai_model || DEFAULT_MODEL;
+    const model = normalizeModel(profile?.ai_model);
 
     const system: ChatMessage = {
       role: "system",
@@ -168,7 +200,7 @@ Reglas:
 - Fechas dd/mm/yyyy => YYYY-MM-DD.`,
     };
 
-    const raw = await callNim(model, [system, { role: "user", content: data.text }], 0.1);
+    const raw = await callGemini(model, [system, { role: "user", content: data.text }], 0.1);
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("El agente no devolvió un JSON válido. Probá de nuevo.");
     try {

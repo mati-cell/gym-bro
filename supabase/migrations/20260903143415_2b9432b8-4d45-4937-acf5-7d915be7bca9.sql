@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ALTER COLUMN ai_model SET DEFAULT 'gemini-3.6-flash';
+UPDATE public.profiles SET ai_model = 'gemini-3.6-flash' WHERE ai_model IS NULL OR ai_model IN ('gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro') OR ai_model LIKE '%/%';

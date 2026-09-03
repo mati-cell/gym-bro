@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const DEFAULT_MODEL = "google/gemini-3.6-flash";
 
 export type ParsedExercise = {
   name: string;

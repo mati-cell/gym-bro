@@ -27,63 +27,43 @@ export type ParsedSession = {
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 async function callGemini(model: string, messages: ChatMessage[], temperature = 0.4) {
-  const apiKey = process.env["GEMINI_API_KEY"];
-  if (!apiKey) throw new Error("Falta la API key de Google AI (Gemini) en el servidor.");
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) throw new Error("Falta la API key del gateway de IA en el servidor.");
 
-  const systemParts = messages
-    .filter((m) => m.role === "system")
-    .map((m) => m.content);
-  const turns = messages.filter((m) => m.role !== "system");
-
-  const contents = turns.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
-  // Gemini exige que la conversación empiece con un turno de usuario.
-  while (contents.length > 0 && contents[0]?.role !== "user") contents.shift();
-
-  const res = await fetch(
-    `${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        ...(systemParts.length
-          ? { systemInstruction: { parts: [{ text: systemParts.join("\n\n") }] } }
-          : {}),
-        contents,
-        generationConfig: { temperature },
-      }),
+  const res = await fetch(AI_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
     },
-  );
+    body: JSON.stringify({ model, messages, temperature }),
+  });
 
   if (!res.ok) {
     const detail = await res.text();
-    console.error("Gemini error", res.status, detail);
+    console.error("AI gateway error", res.status, detail);
+    if (res.status === 429) throw new Error("Demasiadas consultas seguidas. Probá en un minuto.");
+    if (res.status === 402) throw new Error("Se agotaron los créditos de IA del proyecto.");
     throw new Error(`El agente de IA devolvió un error (${res.status}).`);
   }
 
   const json = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    choices?: Array<{ message?: { content?: string } }>;
   };
-  return (
-    json.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text ?? "")
-      .join("")
-      .trim() ?? ""
-  );
+  return json.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
 type SupabaseCtx = { supabase: any; userId: string };
 
 function normalizeModel(model: string | null | undefined): string {
-  // Modelos viejos de NVIDIA NIM ("openai/...", "meta/...") ya no aplican.
-  if (!model || model.includes("/")) return DEFAULT_MODEL;
-  return model;
+  if (!model) return DEFAULT_MODEL;
+  // Modelos guardados sin prefijo de proveedor (o de NVIDIA NIM) se normalizan.
+  if (model.startsWith("google/") || model.startsWith("openai/")) return model;
+  if (model.startsWith("gemini")) return `google/${model}`;
+  if (model.startsWith("gpt")) return `openai/${model}`;
+  return DEFAULT_MODEL;
 }
+
 
 async function buildUserContext({ supabase, userId }: SupabaseCtx) {
   const [{ data: profile }, { data: weights }, { data: sessions }, { data: pending }] =

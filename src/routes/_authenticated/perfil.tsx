@@ -52,7 +52,7 @@ const EMPTY: Form = {
   goal: "",
   experience_level: "",
   notes: "",
-  ai_model: "gemini-2.0-flash",
+  ai_model: "gemini-3.6-flash",
 };
 
 function num(v: string) {
@@ -201,7 +201,7 @@ function ProfilePage() {
             onChange={(e) => setForm({ ...form, ai_model: e.target.value })}
           />
           <p className="text-xs text-muted-foreground">
-            Ej: gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro
+            Ej: gemini-3.6-flash, gemini-2.5-flash, gemini-2.5-pro
           </p>
         </div>
         <Button className="w-full" disabled={saving} onClick={() => void save()}>

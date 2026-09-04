@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionForm, emptyExercise, type DraftSession } from "@/components/SessionForm";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { SessionRow } from "@/lib/workout";
+import { duplicateSession } from "@/lib/duplicateSession";
 
 export const Route = createFileRoute("/_authenticated/sesion/$id")({
   head: () => ({
@@ -72,13 +73,28 @@ function EditSession() {
     navigate({ to: "/historial" });
   }
 
+  async function repeat() {
+    try {
+      const newId = await duplicateSession(supabase, id);
+      toast.success("Sesión duplicada para hoy");
+      navigate({ to: "/sesion/$id", params: { id: newId } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo duplicar");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Editar sesión</h1>
-        <Button variant="destructive" size="sm" onClick={() => void remove()}>
-          <Trash2 className="size-4" /> Borrar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => void repeat()}>
+            <Copy className="size-4" /> Duplicar hoy
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => void remove()}>
+            <Trash2 className="size-4" /> Borrar
+          </Button>
+        </div>
       </div>
       {isLoading || !data ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>

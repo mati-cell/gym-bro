@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ACTIONS, actionLabel, formatDate, formatPlan, type SessionRow } from "@/lib/workout";
+import { duplicateSession } from "@/lib/duplicateSession";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/historial")({
   head: () => ({
@@ -21,6 +23,8 @@ export const Route = createFileRoute("/_authenticated/historial")({
 
 function History() {
   const [filter, setFilter] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["sessions"],
@@ -38,12 +42,27 @@ function History() {
     filter ? (s.session_exercises ?? []).some((ex) => ex.action === filter) : true,
   );
 
+  async function repeat(id: string) {
+    try {
+      const newId = await duplicateSession(supabase, id);
+      toast.success("Sesión duplicada para hoy");
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      navigate({ to: "/sesion/$id", params: { id: newId } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo duplicar");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Historial</h1>
 
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant={filter ? "secondary" : "default"} onClick={() => setFilter(null)}>
+        <Button
+          size="sm"
+          variant={filter ? "secondary" : "default"}
+          onClick={() => setFilter(null)}
+        >
           Todas
         </Button>
         {ACTIONS.map((a) => (
@@ -65,42 +84,55 @@ function History() {
       ) : (
         <div className="space-y-3">
           {sessions.map((s) => {
-            const exercises = [...(s.session_exercises ?? [])].sort((a, b) => a.position - b.position);
+            const exercises = [...(s.session_exercises ?? [])].sort(
+              (a, b) => a.position - b.position,
+            );
             return (
-              <Link key={s.id} to="/sesion/$id" params={{ id: s.id }} className="surface block p-4">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-display font-semibold">
-                    {s.day_number ? `Día ${s.day_number}` : "Sesión"}
-                    {s.title ? ` · ${s.title}` : ""}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{formatDate(s.session_date)}</span>
-                </div>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {exercises.map((ex) => (
-                    <li key={ex.id}>
-                      <div className="flex justify-between gap-3">
-                        <span className={ex.performed ? "" : "text-muted-foreground line-through"}>
-                          {ex.name}
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {formatPlan(ex)}
-                        </span>
-                      </div>
-                      {ex.actual_reps?.length > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          Reps: {ex.actual_reps.join(", ")}
+              <div key={s.id} className="surface block p-4">
+                <Link to="/sesion/$id" params={{ id: s.id }} className="block">
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-display font-semibold">
+                      {s.day_number ? `Día ${s.day_number}` : "Sesión"}
+                      {s.title ? ` · ${s.title}` : ""}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(s.session_date)}
+                    </span>
+                  </div>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {exercises.map((ex) => (
+                      <li key={ex.id}>
+                        <div className="flex justify-between gap-3">
+                          <span
+                            className={ex.performed ? "" : "text-muted-foreground line-through"}
+                          >
+                            {ex.name}
+                          </span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {formatPlan(ex)}
+                          </span>
                         </div>
-                      )}
-                      {ex.notes && <div className="text-xs text-muted-foreground">{ex.notes}</div>}
-                      {ex.action && (
-                        <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-[11px] text-primary">
-                          {actionLabel(ex.action)}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </Link>
+                        {ex.actual_reps?.length > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            Reps: {ex.actual_reps.join(", ")}
+                          </div>
+                        )}
+                        {ex.notes && (
+                          <div className="text-xs text-muted-foreground">{ex.notes}</div>
+                        )}
+                        {ex.action && (
+                          <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-[11px] text-primary">
+                            {actionLabel(ex.action)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </Link>
+                <Button size="sm" variant="secondary" onClick={() => void repeat(s.id)}>
+                  Repetir
+                </Button>
+              </div>
             );
           })}
         </div>

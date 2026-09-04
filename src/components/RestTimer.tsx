@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Timer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+import { CountdownRing } from "@/components/CountdownRing";
 import { toast } from "sonner";
 import {
   REST_PRESETS,
@@ -166,19 +166,27 @@ export function RestTimer() {
     start(v);
   }
 
-  const progress = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
+  const progress = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
 
   return (
     <>
       <button
         aria-label="Timer de descanso"
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 left-4 z-40 flex h-14 min-w-14 items-center justify-center gap-1 rounded-full bg-secondary px-3 text-secondary-foreground shadow-glow transition-transform active:scale-95"
+        className="fixed bottom-20 left-4 z-40 flex size-14 items-center justify-center rounded-full bg-secondary p-1 text-secondary-foreground shadow-glow transition-transform active:scale-95"
       >
-        <Timer className="size-6" />
-        {phase === "running" && (
-          <span className="text-sm font-bold tabular-nums">{formatCountdown(remaining)}</span>
-        )}
+        <CountdownRing
+          progress={phase === "running" || phase === "paused" ? progress : 0}
+          size={56}
+          stroke={5}
+          tone={phase === "running" && remaining <= 10 ? "urgent" : "active"}
+        >
+          {phase === "running" || phase === "paused" ? (
+            <span className="text-xs font-bold tabular-nums">{formatCountdown(remaining)}</span>
+          ) : (
+            <Timer className="size-6" />
+          )}
+        </CountdownRing>
       </button>
 
       {open && (
@@ -198,12 +206,24 @@ export function RestTimer() {
           </div>
 
           <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6">
-            {phase === "done" ? (
-              <p className="text-center text-2xl font-bold">{FINISH_MESSAGE}</p>
-            ) : (
-              <p className="text-6xl font-bold tabular-nums">{formatCountdown(remaining)}</p>
-            )}
-            <Progress value={phase === "done" ? 0 : progress} className="w-full max-w-xs" />
+            <CountdownRing
+              progress={phase === "done" ? 0 : progress}
+              size={220}
+              stroke={14}
+              tone={
+                phase === "done"
+                  ? "done"
+                  : remaining <= 10 && phase === "running"
+                    ? "urgent"
+                    : "active"
+              }
+            >
+              {phase === "done" ? (
+                <p className="px-6 text-center text-xl font-bold">{FINISH_MESSAGE}</p>
+              ) : (
+                <p className="text-5xl font-bold tabular-nums">{formatCountdown(remaining)}</p>
+              )}
+            </CountdownRing>
 
             <div className="flex flex-wrap justify-center gap-2">
               {REST_PRESETS.map((s) => (

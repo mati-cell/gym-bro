@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -109,11 +109,54 @@ function ExerciseView() {
             </SelectContent>
           </Select>
 
+          {(() => {
+            const best = current.reduce<{ peso: number | null; fecha: string } | null>((acc, r) => {
+              if (r.planned_weight_kg == null) return acc;
+              if (!acc || r.planned_weight_kg > (acc.peso ?? 0)) {
+                return { peso: r.planned_weight_kg, fecha: r.sessions?.session_date ?? "" };
+              }
+              return acc;
+            }, null);
+            return best?.peso != null ? (
+              <p className="rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                Récord <span className="font-bold text-primary">{best.peso} kg</span>
+                {best.fecha ? (
+                  <span className="text-muted-foreground"> · {formatDate(best.fecha)}</span>
+                ) : null}
+              </p>
+            ) : null;
+          })()}
+
           <div className="surface h-64 p-3">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                <defs>
+                  <linearGradient id="pesoGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      style={{ stopColor: "var(--color-chart-1)", stopOpacity: 0.35 }}
+                    />
+                    <stop
+                      offset="100%"
+                      style={{ stopColor: "var(--color-chart-1)", stopOpacity: 0.02 }}
+                    />
+                  </linearGradient>
+                  <linearGradient id="repsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      style={{ stopColor: "var(--color-chart-2)", stopOpacity: 0.35 }}
+                    />
+                    <stop
+                      offset="100%"
+                      style={{ stopColor: "var(--color-chart-2)", stopOpacity: 0.02 }}
+                    />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} />
+                <XAxis
+                  dataKey="fecha"
+                  tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+                />
                 <YAxis tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} />
                 <Tooltip
                   contentStyle={{
@@ -123,25 +166,29 @@ function ExerciseView() {
                     color: "var(--color-popover-foreground)",
                   }}
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="peso"
                   name="Peso (kg)"
                   stroke="var(--color-chart-1)"
-                  strokeWidth={2}
-                  dot
+                  strokeWidth={2.5}
+                  fill="url(#pesoGrad)"
+                  dot={false}
+                  activeDot={{ r: 4 }}
                   connectNulls
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="reps"
                   name="Reps promedio"
                   stroke="var(--color-chart-2)"
-                  strokeWidth={2}
-                  dot
+                  strokeWidth={2.5}
+                  fill="url(#repsGrad)"
+                  dot={false}
+                  activeDot={{ r: 4 }}
                   connectNulls
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
 

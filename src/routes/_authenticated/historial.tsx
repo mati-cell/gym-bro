@@ -2,7 +2,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ACTIONS, actionLabel, formatDate, formatPlan, type SessionRow } from "@/lib/workout";
+import {
+  ACTIONS,
+  actionLabel,
+  actionTone,
+  formatDate,
+  formatPlan,
+  sessionVolume,
+  type SessionRow,
+} from "@/lib/workout";
 import { duplicateSession } from "@/lib/duplicateSession";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -95,15 +103,30 @@ function History() {
             return (
               <div key={s.id} className="surface block p-4">
                 <Link to="/sesion/$id" params={{ id: s.id }} className="block">
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-display font-semibold">
-                      {s.day_number ? `Día ${s.day_number}` : "Sesión"}
-                      {s.title ? ` · ${s.title}` : ""}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(s.session_date)}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex w-11 shrink-0 flex-col items-center rounded-xl bg-muted py-1.5">
+                      <span className="text-xl font-bold leading-none">
+                        {s.session_date.slice(8, 10)}
+                      </span>
+                      <span className="text-[11px] uppercase text-muted-foreground">
+                        {new Date(`${s.session_date}T00:00:00`)
+                          .toLocaleDateString("es-UY", { month: "short" })
+                          .replace(".", "")}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-display font-semibold">
+                        {s.day_number ? `Día ${s.day_number}` : "Sesión"}
+                        {s.title ? ` · ${s.title}` : ""}
+                      </span>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(s.session_date)}
+                      </div>
+                    </div>
                   </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {exercises.length} ejercicios · ≈{sessionVolume(exercises)} kg
+                  </p>
                   <ul className="mt-3 space-y-2 text-sm">
                     {exercises.map((ex) => (
                       <li key={ex.id}>
@@ -126,7 +149,9 @@ function History() {
                           <div className="text-xs text-muted-foreground">{ex.notes}</div>
                         )}
                         {ex.action && (
-                          <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-[11px] text-primary">
+                          <span
+                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] ${actionTone(ex.action)}`}
+                          >
                             {actionLabel(ex.action)}
                           </span>
                         )}

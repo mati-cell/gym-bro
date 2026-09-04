@@ -60,10 +60,16 @@ function AuthPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-5">
+    <main
+      className="flex min-h-screen items-center justify-center px-5"
+      style={{
+        background:
+          "radial-gradient(60% 40% at 50% 0%, color-mix(in oklch, var(--color-primary) 12%, transparent), transparent)",
+      }}
+    >
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow">
             <Dumbbell className="size-7" />
           </span>
           <h1 className="text-3xl font-bold">GymLog</h1>

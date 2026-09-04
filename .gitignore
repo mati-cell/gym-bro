@@ -14,6 +14,8 @@ dist-ssr
 .vinxi
 .tanstack/**
 .nitro
+# Superpowers scratch (SDD workspaces, ledgers, review packages)
+.superpowers/
 *.local
 
 # Wrangler / Cloudflare

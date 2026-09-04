@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatWidget } from "@/components/ChatWidget";
+import { RestTimer } from "@/components/RestTimer";
 import { CalendarDays, Dumbbell, Home, LineChart, LogOut, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -51,6 +52,7 @@ function AppLayout() {
       </main>
 
       <ChatWidget />
+      <RestTimer />
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-stretch">

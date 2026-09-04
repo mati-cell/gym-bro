@@ -12,3 +12,8 @@ export function formatCountdown(totalSeconds: number): string {
 export function remainingSeconds(endsAt: number, now: number): number {
   return Math.max(0, Math.ceil((endsAt - now) / 1000));
 }
+
+export function ringOffset(circumference: number, progress: number): number {
+  const p = Math.max(0, Math.min(1, progress));
+  return circumference * (1 - p);
+}

@@ -60,3 +60,50 @@ export function formatDate(iso: string) {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }
+
+export function countThisWeek(
+  sessions: Array<{ session_date: string }>,
+  now: Date = new Date(),
+): number {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - 6);
+  return sessions.filter((s) => {
+    const d = new Date(`${s.session_date}T00:00:00`);
+    return d >= start && d <= now;
+  }).length;
+}
+
+export function sessionVolume(
+  exercises: Array<{
+    planned_weight_kg: number | null;
+    planned_sets: number | null;
+    planned_reps: string | null;
+    performed: boolean;
+  }>,
+): number {
+  let total = 0;
+  for (const ex of exercises) {
+    if (!ex.performed) continue;
+    const m = ex.planned_reps?.match(/\d+/);
+    const reps = m ? Number.parseInt(m[0], 10) : 0;
+    if (ex.planned_weight_kg == null || ex.planned_sets == null || !reps) continue;
+    total += ex.planned_weight_kg * ex.planned_sets * reps;
+  }
+  return Math.round(total);
+}
+
+export function actionTone(action: string | null): string {
+  switch (action) {
+    case "subir_peso":
+      return "bg-success/15 text-success";
+    case "bajar_peso":
+      return "bg-warning/15 text-warning";
+    case "revisar_tecnica":
+      return "bg-chart-4/15 text-chart-4";
+    case "cambiar_ejercicio":
+      return "bg-destructive/15 text-destructive";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}

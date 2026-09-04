@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/historial")({
 
 function History() {
   const [filter, setFilter] = useState<string | null>(null);
+  const [repeatingId, setRepeatingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -43,6 +44,8 @@ function History() {
   );
 
   async function repeat(id: string) {
+    if (repeatingId) return;
+    setRepeatingId(id);
     try {
       const newId = await duplicateSession(supabase, id);
       toast.success("Sesión duplicada para hoy");
@@ -50,6 +53,8 @@ function History() {
       navigate({ to: "/sesion/$id", params: { id: newId } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo duplicar");
+    } finally {
+      setRepeatingId(null);
     }
   }
 
@@ -129,8 +134,13 @@ function History() {
                     ))}
                   </ul>
                 </Link>
-                <Button size="sm" variant="secondary" onClick={() => void repeat(s.id)}>
-                  Repetir
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={repeatingId === s.id}
+                  onClick={() => void repeat(s.id)}
+                >
+                  {repeatingId === s.id ? "Duplicando…" : "Repetir"}
                 </Button>
               </div>
             );

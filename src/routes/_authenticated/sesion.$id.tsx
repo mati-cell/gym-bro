@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Copy, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionForm, emptyExercise, type DraftSession } from "@/components/SessionForm";
@@ -49,6 +50,7 @@ function toDraft(s: SessionRow): DraftSession {
 function EditSession() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["session", id],
@@ -74,12 +76,16 @@ function EditSession() {
   }
 
   async function repeat() {
+    if (busy) return;
+    setBusy(true);
     try {
       const newId = await duplicateSession(supabase, id);
       toast.success("Sesión duplicada para hoy");
       navigate({ to: "/sesion/$id", params: { id: newId } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo duplicar");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -88,8 +94,8 @@ function EditSession() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Editar sesión</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => void repeat()}>
-            <Copy className="size-4" /> Duplicar hoy
+          <Button variant="secondary" size="sm" disabled={busy} onClick={() => void repeat()}>
+            <Copy className="size-4" /> {busy ? "Duplicando…" : "Duplicar hoy"}
           </Button>
           <Button variant="destructive" size="sm" onClick={() => void remove()}>
             <Trash2 className="size-4" /> Borrar
